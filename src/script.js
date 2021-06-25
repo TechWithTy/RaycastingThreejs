@@ -1,4 +1,5 @@
 import * as dat from 'dat.gui';
+import gsap from 'gsap';
 import * as THREE from 'three';
 import './style.css';
 //Texture Loader
@@ -22,7 +23,7 @@ for (let i = 0; i < 4; i++) {
 
   const img = new THREE.Mesh(geometry, material);
 
-  img.position.set(Math.random()+0.003, i * -1.8);
+  img.position.set(Math.random() + 0.003, i * -1.8);
 
   scene.add(img);
 }
@@ -30,11 +31,10 @@ for (let i = 0; i < 4; i++) {
 let objs = [];
 
 scene.traverse((object) => {
-    if (object.isMesh) {
-        objs.push(object)
-        
-    }
-})
+  if (object.isMesh) {
+    objs.push(object);
+  }
+});
 
 // Lights
 
@@ -81,8 +81,8 @@ camera.position.y = 0;
 camera.position.z = 2;
 scene.add(camera);
 
-gui.add(camera.position, 'y').min(-5).max(10);
-gui.add(camera.position, 'x').min(-5).max(10);
+gui.add(camera.position, 'y').min(-100).max(100);
+gui.add(camera.position, 'x').min(-100).max(100);
 
 // Controls
 // const controls = new OrbitControls(camera, canvas)
@@ -106,12 +106,17 @@ function onMouseWheel(event) {
   y = -event.deltaY * 0.0005;
 }
 
-const mouse = new THREE.Vector2()
+const mouse = new THREE.Vector2();
 
 window.addEventListener('mousemove', (event) => {
-    mouse.x = event.clientX / sizes.width * 2 + 1;
-    mouse.y = -(event.clientY / sizes.height) *2 - 1;
-})
+  //mouse.x is the first vector which has access to x values
+  // of mouse divided by the total width of the browser screen(sizes.width).
+  mouse.x = (event.clientX / sizes.width) * 2 - 1;
+
+  //mouse.y is the second vector which has access to y values. we need to
+  // minus (-) the divided mouseY and screen size of Y to scroll down.
+  mouse.y = -(event.clientY / sizes.height) * 2 + 1;
+});
 /**
  * Animate
  */
@@ -124,19 +129,29 @@ const tick = () => {
 
   // Update objects
   position += y;
-  y *= .9;
+  y *= 0.9;
 
   //Raycaster
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(objs);
-    console.log(intersects)
-    for (const intersect of intersects) {
-        
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(objs);
+  console.log(intersects);
+  for (const intersect of intersects) {
+    gsap.to(intersect.object.scale, { x: 1.7, y: 1.7 });
+      gsap.to(intersect.object.rotation, { y: -0.5 });
+          gsap.to(intersect.object.position, { z: -0.9 });
+
+  }
+
+  for (const object of objs) {
+    if (!intersects.find((intersect) => intersect.object === object)) {
+      gsap.to(object.scale, { x: 1, y: 1 });
+        gsap.to(object.rotation, { y: 0 });
+              gsap.to(object.position, { z: 0 });
+
     }
+  }
 
-
-
-  camera.position.y = position;
+  camera.position.y = -position;
 
   // Update Orbital Controls
   // controls.update()
